@@ -183,6 +183,7 @@ class CumulantsAndFlows():
 
     def single_ave_array_outer(self, n: int, k: int) -> tuple:
         '''Calculate <k> array with k = 2, 4, 6.
+
         Args:
         n:
             Order of Vn vector
@@ -352,7 +353,7 @@ class CumulantsAndFlows():
                 print('The stand error of v22 square < 0')
                 return np.nan            
 
-
+'''
 #Let's test
 import time
 import cProfile
@@ -398,7 +399,7 @@ v24 = vnk.flow(2, 4)
 print(v24)
 time_end_4 = time.time()
 print(time_end_4 - time_start_4)
-
+'''
 
 
 

@@ -1,0 +1,82 @@
+#@author: LiuQi 2023/1/2
+'''This program is the used to sort centrality by raw hdf5 file
+'''
+
+#Import module
+import hic_flow
+import numpy as np
+import multiprocessing as mpi
+import h5py
+
+
+#Variables definition
+centrality_interval = np.array([0, 5, 10, 20, 30, 40, 50, 60, 70, 80])
+eta_cut = np.array([-1, 1])
+
+
+#Function definition
+def mult_dic(file_path: str) -> dict:
+    '''This function is used to get multiplicity dict from
+    raw hdf5 file. (filepath*hydroevent:multiplicity)
+
+    Args:
+        file_path_list:
+            The list of path of hdf5 raw file.
+    Return:
+        this_dic
+            The dictionary where key = hydro_name and value = mult
+    '''
+    this_dic = {} 
+    with h5py.File(file_path, 'r') as f:
+        for event in f.keys():  #one f[event] is one hydro
+            nsample = f[event]['sample'][-1]  #The number of oversample
+            charge = f[event]['charge']
+            phi = f[event]['phi']
+            eta = f[event]['eta']  
+            mult_ref = (phi[(charge != 0) & (eta > eta_cut[0]) & 
+                        (eta < eta_cut[1])]).size/nsample  #You can change the condition.
+            hydro_mult_key = file_path + '*' + event
+            key_value = {hydro_mult_key: mult_ref}
+            this_dic.update(key_value)
+    return this_dic
+
+
+def centrality_sort(hydro_mult_dic: dict, centrality_interval: np.ndarray) -> list:
+    '''This function is used to get centrality dict from
+    raw hdf5 file. (filepath*hydroevent:centrality interval)
+
+    Args:
+        hydro_mult_dic:
+            Dictionary of hydro_name:mult
+    Return:
+        central_list:
+            The list of file name list corrspond to centrality.
+    '''
+    central_list = []
+    hydro_mult_tuple_list = [(value1, key1) for key1, value1 
+                             in hydro_mult_dic.items()]  #(mult, hydro_name)
+    hydro_mult_tuple_list_sorted = sorted(hydro_mult_tuple_list, reverse=False)
+    event_number = len(hydro_mult_tuple_list_sorted)
+    cut_order_list = [int(np.percentile(range(0, event_number), 100 - percentile))
+                      for percentile in centrality_interval]
+    for i in range(0, len(cut_order_list) - 1):
+        tmp_list = []
+        high_cut = cut_order_list[i]
+        low_cut = cut_order_list[i + 1]
+        for j in range(low_cut, high_cut):
+            tmp_list.append(hydro_mult_tuple_list_sorted[j][1])
+        central_list.append(tmp_list)
+    return central_list
+
+
+
+
+
+    
+    
+
+   
+
+
+
+
