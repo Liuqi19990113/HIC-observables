@@ -16,10 +16,10 @@ def qn(phi_list: list, n: int) -> complex:
     '''This function is used to calculate the Q_n vector.
 
     Args:
-    phi_list:
-        A list of angle.
-    n:
-        The order 'n' of Q_n vector.
+        phi_list:
+            A list of angle.
+        n:
+            The order 'n' of Q_n vector.
     Return:
         Return Q_n vector.
     '''
@@ -42,12 +42,12 @@ def single_ave2(qn: complex, mult: int) -> float:
     '''This function is used to calculate <2>.
 
     Args:
-    qn:
-        Q_n vector.
-    mult:
-        The multiplicity of this event.
+        qn:
+            Q_n vector.
+        mult:
+            The multiplicity of this event.
     Return:
-        <2>
+            <2>
     '''
     qn_conj = np.conjugate(qn)
     ave2_single_event = (((qn*qn_conj).real - mult)/(eve_weight(mult, 2)))
@@ -99,10 +99,10 @@ def all_event_ave(weight_list: list, single_ave_list: list) -> float:
     '''This function is used to calculate <<n>>.
 
     Args:
-    weight_list:
-        List of weight.
-    single_ave_list:
-        List of single event <n> result which corresponds to weight_list. 
+        weight_list:
+            List of weight.
+        single_ave_list:
+            List of single event <n> result which corresponds to weight_list. 
     Return:
         <<n>>.
     '''
@@ -118,15 +118,15 @@ def weighted_stand_error_sq(weight_list: np.ndarray, variable_list: np.ndarray,
     take reference of doctoral dissertation of Bilandzic equation(c.3).
         
     Args:
-    weight_list:
-        List of weight.
-    variable_list:
-        List of random variable.
-    ave:
-        Mean vaule of variable.
+        weight_list:
+            List of weight.
+        variable_list:
+            List of random variable.
+        ave:
+            Mean vaule of variable.
     Return:
-    weighted_sq_err:
-        Weighted square stand error.
+        weighted_sq_err:
+            Weighted square stand error.
     '''
     weight_list_sum = weight_list.sum()
     weight_list_sum_sq = weight_list.sum()*weight_list.sum()
@@ -142,13 +142,13 @@ def weighted_covariance(variable1_list: np.ndarray, weight1_list: np.ndarray,
     take reference of doctoral dissertation of Bilandzic equation(c.12).
         
     Args:
-    weight_list:
-        List of weight.
-    variable_list:
-        List of random variable.
+        weight_list:
+            List of weight.
+        variable_list:
+            List of random variable.
     Return:
-    covariance:
-        Weighted covariance.
+        covariance:
+            Weighted covariance.
     '''
     numerator1 = ((variable1_list*weight1_list*variable2_list*weight2_list).sum()/
                     (weight1_list*weight2_list).sum())
@@ -185,10 +185,10 @@ class CumulantsAndFlows():
         '''Calculate <k> array with k = 2, 4, 6.
 
         Args:
-        n:
-            Order of Vn vector
-        k:
-            Number of correlate particles
+            n:
+                Order of Vn vector
+            k:
+                Number of correlate particles
         Return:
             A tuple of single event <k> array. 
         '''
@@ -226,12 +226,13 @@ class CumulantsAndFlows():
 
     def cn_k(self, n: int, k: int) -> float:
         '''Calculate cn_{k} with k = 2, 4, 6
-        s<k> 
+        s<k>
+
         Args:
-        n:
-            Order of Vn vector
-        k:
-            Number of correlate particles
+            n:
+                Order of Vn vector
+            k:
+                Number of correlate particles
         Return:
             cn{k}
         '''
@@ -272,6 +273,7 @@ class CumulantsAndFlows():
     def vn_k(self, n: int, k: int) -> float:
         '''Calculate vnk by cnk. n k same to the def in cnk
         '''
+        print('Calculating V{}{}'.format(n, k))
         #vn{2}
         if k == 2:
             cn2 = self.cn_k(n, k)
@@ -304,6 +306,7 @@ class CumulantsAndFlows():
                 return vn6
         else:
             print("Error! No such k.")
+        print("done!")
 
 
     def error_vn_k(self, n: int, k: int) -> float:
@@ -311,6 +314,7 @@ class CumulantsAndFlows():
         doctoral dissertation of Bilandzic equation(c.24), (c.28).
         The args is same to vn_k
         '''
+        print('Calculating V{}{}_error'.format(n, k))
         if k == 2:
             single_ave2_array = self.single_ave_array_outer(n, k)
             s_2_sq = weighted_stand_error_sq(self.weight2_array, single_ave2_array, 
@@ -352,6 +356,7 @@ class CumulantsAndFlows():
             else:
                 print('The stand error of v22 square < 0')
                 return np.nan            
+        print("done!")
 
 '''
 #Let's test
