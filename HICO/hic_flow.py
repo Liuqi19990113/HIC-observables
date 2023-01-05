@@ -159,6 +159,50 @@ def weighted_covariance(variable1_list: np.ndarray, weight1_list: np.ndarray,
     return covariance 
     
     
+def single_ave_array_outer_mpi(two_d_phi_array: list,multiplicity_array: list, n: int, k: int) -> tuple:
+    '''Calculate <k> array with k = 2, 4, 6. Same function can be found in serial run
+    class. This function here is designed for mpi run.
+
+    Args:
+        n:
+            Order of Vn vector
+        k:
+            Number of correlate particles
+    Return:
+        A tuple of single event <k> array. 
+    '''
+    if k == 2:
+        qn_array = np.array([qn(phi_list, n) for phi_list in
+                             two_d_phi_array])
+        single_ave2_array = np.ravel(np.array([single_ave2(qn_array[i], 
+                                     multiplicity_array[i]) for i in range(0,len(qn_array))]))
+        return single_ave2_array
+    elif k == 4:
+        qn_array = np.array([qn(phi_list, n) for phi_list in
+                             two_d_phi_array])
+        single_ave2_array = np.ravel(np.array([single_ave2(qn_array[i], 
+                                     multiplicity_array[i]) for i in range(0,len(qn_array))]))
+        q2n_array = np.array([qn(phi_list, 2*n) for phi_list in
+                             two_d_phi_array])
+        single_ave4_array = np.ravel(np.array([single_ave4(qn_array[i], q2n_array[i], 
+                                     multiplicity_array[i]) for i in range(0,len(q2n_array))]))
+        return single_ave2_array, single_ave4_array
+    elif k == 6:
+        qn_array = np.array([qn(phi_list, n) for phi_list in
+                             two_d_phi_array])
+        single_ave2_array = np.ravel(np.array([single_ave2(qn_array[i], 
+                                     multiplicity_array[i]) for i in range(0,len(qn_array))]))
+        q2n_array = np.array([qn(phi_list, 2*n) for phi_list in
+                             two_d_phi_array])
+        single_ave4_array = np.ravel(np.array([single_ave4(qn_array[i], q2n_array[i], 
+                                     multiplicity_array[i]) for i in range(0,len(q2n_array))]))
+        q3n_array = np.array([qn(phi_list, 3*n) for phi_list in
+                             two_d_phi_array])
+        single_ave6_array = np.ravel(np.array([single_ave6(qn_array[i], q2n_array[i], q3n_array[i], 
+                                     multiplicity_array[i]) for i in range(0,len(q3n_array))]))
+        return single_ave2_array, single_ave4_array, single_ave6_array
+
+
 # Class definition
 class CumulantsAndFlows():
     '''This class use the function above to calculate the
@@ -179,7 +223,6 @@ class CumulantsAndFlows():
                                        in self.multiplicity_array])
         self.weight6_array = np.array([eve_weight(mult, 6) for mult 
                                        in self.multiplicity_array])
-
 
     def single_ave_array_outer(self, n: int, k: int) -> tuple:
         '''Calculate <k> array with k = 2, 4, 6.
@@ -222,7 +265,6 @@ class CumulantsAndFlows():
             single_ave6_array = np.ravel(np.array([single_ave6(qn_array[i], q2n_array[i], q3n_array[i], 
                                         self.multiplicity_array[i]) for i in range(0,len(q3n_array))]))
             return single_ave2_array, single_ave4_array, single_ave6_array
-
 
     def cn_k(self, n: int, k: int) -> float:
         '''Calculate cn_{k} with k = 2, 4, 6
@@ -269,11 +311,10 @@ class CumulantsAndFlows():
         else:
             print("Error! No such k.")
 
-
     def vn_k(self, n: int, k: int) -> float:
         '''Calculate vnk by cnk. n k same to the def in cnk
         '''
-        print('Calculating V{}{}'.format(n, k))
+#        print('Calculating V{}{}'.format(n, k))
         #vn{2}
         if k == 2:
             cn2 = self.cn_k(n, k)
@@ -308,13 +349,12 @@ class CumulantsAndFlows():
             print("Error! No such k.")
         print("done!")
 
-
     def error_vn_k(self, n: int, k: int) -> float:
         '''Output the stand error of vn_k. Take reference of 
         doctoral dissertation of Bilandzic equation(c.24), (c.28).
         The args is same to vn_k
         '''
-        print('Calculating V{}{}_error'.format(n, k))
+#        print('Calculating V{}{}_error'.format(n, k))
         if k == 2:
             single_ave2_array = self.single_ave_array_outer(n, k)
             s_2_sq = weighted_stand_error_sq(self.weight2_array, single_ave2_array, 
@@ -357,6 +397,186 @@ class CumulantsAndFlows():
                 print('The stand error of v22 square < 0')
                 return np.nan            
         print("done!")
+
+
+class CumulantsAndFlows_mpi():
+    '''This class use the function above to calculate the
+    cumulants and flow vector and these error in No subevent.
+    You need to initialize it by <2> <4> <6> array and
+    multiplicity array.
+    '''
+
+    def __init__(self, all_event_single_ave_array: list, mult_array: list):
+        '''Initialize all_event_single_ave_array and multiplicity array 
+        '''
+        self.multiplicity_array = mult_array
+        self.weight2_array = np.array([eve_weight(mult, 2) for mult 
+                                       in self.multiplicity_array])
+        self.weight4_array = np.array([eve_weight(mult, 4) for mult 
+                                       in self.multiplicity_array])
+        self.weight6_array = np.array([eve_weight(mult, 6) for mult 
+                                       in self.multiplicity_array])
+        if len(all_event_single_ave_array) == 1:
+            self.single_ave2_array = all_event_single_ave_array[0]
+        elif len(all_event_single_ave_array) == 2:
+            self.single_ave2_array = all_event_single_ave_array[0]
+            self.single_ave4_array = all_event_single_ave_array[1]
+        elif len(all_event_single_ave_array) == 3:
+            self.single_ave2_array = all_event_single_ave_array[0]
+            self.single_ave4_array = all_event_single_ave_array[1]
+            self.single_ave6_array = all_event_single_ave_array[2]
+
+    def cn_k(self, n: int, k: int) -> float:
+        '''Calculate cn_{k} with k = 2, 4, 6
+        s<k>
+
+        Args:
+            n:
+                Order of Vn vector
+            k:
+                Number of correlate particles
+        Return:
+            cn{k}
+        '''
+        #cn{2}
+        if k == 2:
+            all_event_ave2 = all_event_ave(self.weight2_array, 
+                                           self.single_ave2_array)
+            cn_2 = all_event_ave2
+            return cn_2
+        #cn{4}
+        elif k == 4:
+            all_event_ave2 = all_event_ave(self.weight2_array, 
+                                           self.single_ave2_array)
+            all_event_ave4 = all_event_ave(self.weight4_array,
+                                           self.single_ave4_array)
+            cn_4 = all_event_ave4 - 2*all_event_ave2*all_event_ave2
+            
+            return cn_4
+        #cn{6}
+        elif k == 6:
+            all_event_ave2 = all_event_ave(self.weight2_array,
+                                           self.single_ave2_array)
+            all_event_ave4 = all_event_ave(self.weight4_array,
+                                           self.single_ave4_array)
+            all_event_ave6 = all_event_ave(self.weight6_array,
+                                           self.single_ave6_array)
+            cn_6 = (6*all_event_ave6 - 9*all_event_ave2*all_event_ave4 + 
+                    12*all_event_ave2*all_event_ave2*all_event_ave2)
+            return cn_6
+        else:
+            print("Error! No such k.")
+
+    def vn_k(self, n: int, k: int) -> float:
+        '''Calculate vnk by cnk. n k same to the def in cnk
+        '''
+#        print('Calculating V{}{}'.format(n, k))
+        #vn{2}
+        if k == 2:
+            cn2 = self.cn_k(n, k)
+            if cn2 < 0:
+                print('v{}{} is imag, let me show you c{}{}, c{}{} = {}'
+                       .format(n, k, n, k, n, k, cn2))
+                return np.nan
+            else:
+                vn2 = np.sqrt(cn2)
+                return vn2
+        #vn{4}
+        elif k == 4:
+            cn4 = self.cn_k(n, k)
+            if cn4 > 0:
+                print('v{}{} is imag, let me show you c{}{}, c{}{} = {}'
+                       .format(n, k, n, k, n, k, cn4))
+                return np.nan
+            else:
+                vn4 = np.power(-cn4, 0.25)
+                return vn4
+        #vn{6}
+        elif k == 6:
+            cn6 = self.cn_k(n, k)
+            if cn6 < 0:
+                print('v{}{} is imag, let me show you c{}{}, c{}{} = {}'
+                       .format(n, k, n, k, n, k, cn6))
+                return np.nan
+            else:
+                vn6 = np.power(0.25*cn6, 1/6)            
+                return vn6
+        else:
+            print("Error! No such k.")
+        print("done!")
+
+    def error_vn_k(self, n: int, k: int) -> float:
+        '''Output the stand error of vn_k. Take reference of 
+        doctoral dissertation of Bilandzic equation(c.24), (c.28).
+        The args is same to vn_k
+        '''
+#        print('Calculating V{}{}_error'.format(n, k))
+        if k == 2:
+            s_2_sq = weighted_stand_error_sq(self.weight2_array, self.single_ave2_array, 
+                                             np.mean(self.single_ave2_array))
+            s_vn2_sq = ((self.weight2_array*self.weight2_array).sum()*s_2_sq/
+                        (4*np.mean(self.single_ave2_array)*
+                        np.power(self.weight2_array.sum(), 2)))
+            if s_vn2_sq >= 0:
+                return np.sqrt(s_vn2_sq)
+            else:
+                print('The stand error of v22 square < 0')
+                return np.nan
+        if k == 4:
+            s_2_sq = weighted_stand_error_sq(self.weight2_array, self.single_ave2_array, 
+                                            np.mean(self.single_ave2_array))
+            s_4_sq = weighted_stand_error_sq(self.weight4_array, self.single_ave4_array, 
+                                            np.mean(self.single_ave4_array))
+            covar_24 = weighted_covariance(self.single_ave2_array, self.weight2_array, 
+                                       self.single_ave4_array, self.weight4_array)
+            s_vn4_sq_dom = np.power(2*np.mean(self.single_ave2_array)
+                                    *np.mean(self.single_ave2_array)
+                                    - np.mean(self.single_ave4_array), 3/2)
+            s_vn4_sq_num1 = (s_2_sq*np.mean(self.single_ave2_array)
+                             *np.mean(self.single_ave2_array)
+                             *(self.weight2_array*self.weight2_array).sum()
+                             /(self.weight2_array.sum()*self.weight2_array.sum()))
+            s_vn4_sq_num2 = (((self.weight4_array*self.weight4_array).sum()
+                               *s_4_sq)/(16*self.weight4_array.sum()*
+                               self.weight4_array.sum()))
+            s_vn4_sq_num3 = ((self.weight4_array*self.weight2_array).sum()
+                             *np.mean(self.single_ave2_array)*covar_24
+                             /(2*(self.weight4_array).sum()
+                             *(self.weight2_array).sum()))
+            s_vn4_sq = ((s_vn4_sq_num1 + s_vn4_sq_num2 - s_vn4_sq_num3)
+                        /s_vn4_sq_dom)
+            if s_vn4_sq >= 0:
+                return np.sqrt(s_vn4_sq)
+            else:
+                print('The stand error of v22 square < 0')
+                return np.nan            
+        print("done!")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 '''
 #Let's test

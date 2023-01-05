@@ -62,7 +62,7 @@ def centrality_sort(hydro_mult_dic: dict, centrality_interval: np.ndarray) -> li
     cut_order_list = [int(np.percentile(range(0, event_number), 100 - percentile))
                       for percentile in centrality_interval]
     for i in range(0, len(cut_order_list) - 1):
-        print('Centrality sorting in class {}'.format(i + 1))
+#        print('Centrality sorting in class {}'.format(i + 1))
         tmp_list = []
         high_cut = cut_order_list[i]
         low_cut = cut_order_list[i + 1]
