@@ -47,7 +47,10 @@ def run_vn_serial(hdf5_files_list: list, n: int, k:int):
         all_hydro_mult_dic.update(this_hdf5_dic)
     central_hydroevent_list_list = hic_centrality.centrality_sort(
                     all_hydro_mult_dic, hic_centrality.centrality_interval)
+    i = 0
     for hydroevent_list in central_hydroevent_list_list:
+        i+=1
+        print("Now we are in class {}".format(i))
         all_event_phi_array = hic_centrality.return_somethings('phi', hydroevent_list)
         mult_array = [len(phi_array) for phi_array in all_event_phi_array]
         my_cumu = hic_flow.CumulantsAndFlows(all_event_phi_array, mult_array)

@@ -98,6 +98,9 @@ def return_somethings(obs_name: str, hdf5file_event_list: list) -> list:
                 obs_ref = (obs[(sample == i) & (charge != 0) & (eta > eta_cut[0]) & 
                             (eta < eta_cut[1])])  #You can change the condition.
                 obs_ref_list_list.append(obs_ref)
+                if obs_ref.size < 10:
+                    print(obs_ref.size)
+                    print(hdf5file_event)
     return obs_ref_list_list           
             
             
