@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 #@author: LiuQi 2023/1/1
 '''This python program file is used to calculate flow observables by Q-cumulant. 
 C_2{2}, C_2{4}, V_2{2}, V_2{4} and these error. The main reference article are: the
@@ -8,7 +9,6 @@ HIC package.
 # Import module
 import numpy as np
 import math
-from hic import flow
 
 
 # Function definition

@@ -1,3 +1,4 @@
+#usr/bin/python3
 #author@ Liuqi 2023/1/4
 '''This python program file is main process used to calculate flow.
 '''
@@ -5,11 +6,12 @@
 
 #Import module
 import numpy as np
-import hic_flow
 import hic_centrality
 import os
+import sys
 from multiprocessing.pool import Pool
 import time
+import hic_flow
 
 
 #Function definition
@@ -47,10 +49,7 @@ def run_vn_serial(hdf5_files_list: list, n: int, k:int):
         all_hydro_mult_dic.update(this_hdf5_dic)
     central_hydroevent_list_list = hic_centrality.centrality_sort(
                     all_hydro_mult_dic, hic_centrality.centrality_interval)
-    i = 0
     for hydroevent_list in central_hydroevent_list_list:
-        i+=1
-        print("Now we are in class {}".format(i))
         all_event_phi_array = hic_centrality.return_somethings('phi', hydroevent_list)
         mult_array = [len(phi_array) for phi_array in all_event_phi_array]
         my_cumu = hic_flow.CumulantsAndFlows(all_event_phi_array, mult_array)
@@ -118,12 +117,20 @@ def run_vn_parallel(hdf5_files_list: list, n: int, k:int):
 
 
 #go!
-test1 = 'C:\\Users\\LiuQi\\Desktop\\test1'
-test2 = 'C:\\Users\\LiuQi\\Desktop\\test2'
 if __name__ == "__main__":
-    run_vn_serial([test1, test2], 2, 2)
-    run_vn_parallel([test1, test2], 2, 2)
-
+    files_dir_list = sys.argv
+    del files_dir_list[0] 
+    whereami = os.getcwd()
+    os.chdir(whereami)
+    files_list = []
+    for dict in files_dir_list:
+        abs_dict_path = os.path.abspath(dict)
+        hdf5_list = os.listdir(dict)
+        for hdf5_file in hdf5_list:
+            files_list.append(os.path.join(abs_dict_path,hdf5_file))
+    print("Target files: {}".format(files_list))
+    run_vn_parallel(files_list, 2, 4)
+#    run_vn_serial(files_list, 2, 2)
 
 
 
