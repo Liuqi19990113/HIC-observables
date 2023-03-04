@@ -11,7 +11,7 @@ import h5py
 
 
 #Variables definition
-centrality_interval = np.array([0, 5,10, 20, 30, 40, 50, 60, 70, 80])
+centrality_interval = np.array([0, 5,10, 20, 30, 40, 50, 60, 70,80])
 eta_cut = np.array([-1.3, 1.3])
 
 
@@ -37,8 +37,8 @@ def mult_dic(file_path: str) -> dict:
             phi = f[event]['phi']
             eta = f[event]['eta']
             pt = f[event]['pT']  
-            mult_ref = (phi[(charge != 0) & (eta > -1.3) & 
-                        (eta < 1.3) &(pt > 0.15) &(pt <2 ) ] ).size/nsample  #You can change the condition.
+            mult_ref = (phi[(charge != 0) & (eta > -0.5) & 
+                        (eta < 0.5) ] ).size/nsample  #You can change the condition.
             hydro_mult_key = file_path + '*' + event
             key_value = {hydro_mult_key: mult_ref}
             this_dic.update(key_value)
@@ -107,7 +107,7 @@ def return_somethings(obs_name: str, hdf5file_event_list: list) -> list:
             pt = f[event_name]['pT'] 
             for i in range(1, nsample+1): 
                 obs_ref = (obs[(sample == i) & (charge != 0) & (eta > eta_cut[0]) & 
-                            (eta < eta_cut[1]) & (pt > 0.15) & (pt <2 )])  #You can change the condition.
+                            (eta < eta_cut[1]) & (pt > 0.15) & (pt < 2 )])  #You can change the condition.
                 obs_ref_list_list.append(obs_ref)
     return obs_ref_list_list           
             

@@ -12,7 +12,9 @@ import sys
 from multiprocessing.pool import Pool
 import time
 import hic_flow
-
+import hic_meanpt
+import hic_dNdeta
+import hic_Nchdistribution
 
 #Function definition
 def give_hydroevent_return_avea_and_mult(para_list: list):
@@ -114,12 +116,56 @@ def run_vn_parallel(hdf5_files_list: list, n: int, k:int):
     print("In parallel run v{}{} is {}".format(n, k, vnk_list))
     print("In parallel run v{}{} error is {}".format(n, k, vnk_error_list))
     print("run time: {}".format(time_end - time_start))
+    return np.array(vnk_list), np.array(vnk_error_list)
+
+
+def runmeanpT(hdf5_files_list, PID):
+    hydro_mult_dict_list = []
+    all_hydro_mult_dic = {}
+    pt_array = []
+    error = []
+    with Pool() as pool:
+        hydro_mult_dict_list = pool.map(hic_centrality.mult_dic, hdf5_files_list)
+    pool.close()
+    pool.join()
+    for hydro_mult_dict in hydro_mult_dict_list:
+        all_hydro_mult_dic.update(hydro_mult_dict)
+    central_hydroevent_list_list = hic_centrality.centrality_sort(all_hydro_mult_dic, hic_centrality.centrality_interval)
+    for list in central_hydroevent_list_list:
+        meanpt = hic_meanpt.meanpT(list,PID)[0]
+        error_this = hic_meanpt.meanpT(list,PID)[1]
+        print((meanpt,error_this))
+        pt_array.append(meanpt)
+        error.append(error_this)
+    return np.array(pt_array), np.array(error)
+
+def runallchargedmeanpT(hdf5_files_list):
+    hydro_mult_dict_list = []
+    all_hydro_mult_dic = {}
+    pt_array = []
+    error = []
+    with Pool() as pool:
+        hydro_mult_dict_list = pool.map(hic_centrality.mult_dic, hdf5_files_list)
+    pool.close()
+    pool.join()
+    for hydro_mult_dict in hydro_mult_dict_list:
+        all_hydro_mult_dic.update(hydro_mult_dict)
+    central_hydroevent_list_list = hic_centrality.centrality_sort(all_hydro_mult_dic, hic_centrality.centrality_interval)
+    for list in central_hydroevent_list_list:
+        meanpt = hic_meanpt.all_charged_meanpT(list)[0]
+        error_this = hic_meanpt.all_charged_meanpT(list)[1]
+        print((meanpt,error_this))
+        pt_array.append(meanpt)
+        error.append(error_this)
+    return np.array(pt_array), np.array(error)
 
 
 #go!
 if __name__ == "__main__":
+    print("go!")
     files_dir_list = sys.argv
-    del files_dir_list[0] 
+    del files_dir_list[0]
+    whichtype=(files_dir_list[1].split('_'))[3] 
     whereami = os.getcwd()
     os.chdir(whereami)
     files_list = []
@@ -129,10 +175,16 @@ if __name__ == "__main__":
         for hdf5_file in hdf5_list:
             files_list.append(os.path.join(abs_dict_path,hdf5_file))
     print("Target files: {}".format(files_list))
-    run_vn_parallel(files_list, 2, 4)
-#    run_vn_serial(files_list, 2, 2)
-
-
+    v22,v22err =  run_vn_parallel(files_list, 2, 2)
+    v24,v24err =   run_vn_parallel(files_list, 2, 4)
+    distribution = hic_Nchdistribution.run(files_list)
+    meanpT, meanpTerr = runallchargedmeanpT(files_list)
+#    pionpt,pionpterr =   runmeanpT(files_list,211)
+#    kaonpt,kaonpterr =   runmeanpT(files_list,321)
+#    protonpt, protonpterr =    runmeanpT(files_list,2212)
+#    mult,mult_err = hic_dNdeta.get_dNdeta(files_list)
+#    np.savez(whichtype+"hydro_results",v22,v22err,v24,v24err,pionpt,pionpterr,kaonpt,kaonpterr,protonpt,protonpterr,mult,mult_err)
+    np.savez(whichtype+"hydro_results",v22,v22err,v24,v24err,meanpT,meanpTerr)
 
 
 
